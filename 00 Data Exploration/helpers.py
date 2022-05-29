@@ -116,7 +116,7 @@ def plot_dists(heights, weights, bin_no, show = True):
     if show:
         plt.show()
 
-    return plt
+    return None
 
 def plot_gender_dists(heights, weights, bin_no):
 
@@ -147,6 +147,16 @@ def plot_population_comparison(var, popmean, popstd, subplot_no = 0, norm_obs = 
     sns.distplot(data['Population'], ax=ax[subplot_no], label = 'Population')
     if markers:
         plt.axvline(meanpopm)
+
+    return None
+
+def ttest(data):
+    result = stats.ttest_ind(data['Study'], data['Population'], 
+                      equal_var=False)
+    if result.pvalue > 0.05:
+        print(f'pval = {round(result.pvalue, 6)}, distributions can be assumed the same')
+    else:
+        print(f'pval = {round(result.pvalue, 6)}, distributions cannot be assumed the same')
 
     return None
 
