@@ -76,28 +76,28 @@ def summarise(df):
     min_ipd = ipds.min()
 
     n = len(df['Participant ID'])
-    h_range = max_height - min_height
-    w_range = max_weight - min_weight
-    i_range = max_ipd - min_ipd
+    h_range = round(max_height - min_height, 2)
+    w_range = round(max_weight - min_weight, 2)
+    i_range = round(max_ipd - min_ipd, 2)
 
     print(f'Number of participants successfully collected: {n}\n')
 
     print('---Heights---')
     print(f'Range: {h_range}cm')
-    print(f'Mean: {np.mean(heights)}, mode {stats.mode(heights)[0]}, median: {np.median(heights)}')
+    print(f'Mean: {round(np.mean(heights), 3)}, mode {stats.mode(heights)[0]}, median: {np.median(heights)}')
     print(f'Tallest: {max_height}, {convert_height(max_height)[0]}ft {convert_height(max_height)[1]}in, (ID: 00{return_max_min_ID(df, heights)})')
     print(f'shortest: {min_height}, {convert_height(min_height)[0]}ft {convert_height(min_height)[1]}in, (ID: 00{return_max_min_ID(df, heights, max=False)})\n')
 
     print('---Weights---')
-    print(f'Range: {round(w_range)}kg')
-    print(f'Mean: {np.mean(weights)}, mode {stats.mode(weights)[0]}, median: {np.median(weights)}')
+    print(f'Range: {w_range}kg')
+    print(f'Mean: {round(np.mean(weights), 3)}, mode {stats.mode(weights)[0]}, median: {np.median(weights)}')
     print(f'Largest: {max_weight}kg, {convert_weight(max_weight)}lbs (ID: 00{return_max_min_ID(df, weights)})')
     print(f'Smallest: {min_weight}kg, {convert_weight(min_weight)}lbs (ID: 00{return_max_min_ID(df, weights, max=False)})')
     print(' ')
     
     print('---IPDs---')
-    print(f'Range: {round(i_range)}kg')
-    print(f'Mean: {np.mean(ipds)}, mode {stats.mode(ipds)[0]}, median: {np.median(ipds)}')
+    print(f'Range: {i_range}cm')
+    print(f'Mean: {round(np.mean(ipds), 6)}, mode {stats.mode(ipds)[0]}, median: {np.median(ipds)}')
     print(f'Largest: {max_ipd}cm, (ID: 00{return_max_min_ID(df, ipds)})')
     print(f'Smallest: {min_ipd}cm, (ID: 00{return_max_min_ID(df, ipds, max=False)})')
 

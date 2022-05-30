@@ -13,9 +13,9 @@ OUTPUT: structured and re-named JPEG files allowing reference by participant and
 '''
 
 def generate_ids(n):
-	'''
-	n = total number of study participants
-	'''
+    '''
+    n = total number of study participants
+    '''
     IDs = [str(x) for x in list(range(1,n+1))]
     for i in range(len(IDs)):
         IDs[i] = '0'+IDs[i]
@@ -23,7 +23,7 @@ def generate_ids(n):
             IDs[i] = '0'+IDs[i]
 
     print(f'Total number of IDs generated: {len(IDs)}')
-    
+
     return IDs
 
 def create_folders(IDs):

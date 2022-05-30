@@ -26,12 +26,7 @@ def remove_bkg(img, threshold=0.7):
     segmentor = SelfiSegmentation()
     img_Out = segmentor.removeBG(img, (255,255,255), threshold=threshold)
 
-    fig, ax = plt.subplots(figsize=[10,10])
-    ax.imshow(cv2.cvtColor(img_Out, cv2.COLOR_RGB2BGR))
-    plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
-    plt.show()
-    
-    return None
+    return img_Out
 
 def showimage(myimage):
     fig, ax = plt.subplots(figsize=[10,10])
@@ -54,10 +49,7 @@ def apply_hsv_filter(img):
 
     img[ mask == 0] = 255
 
-    showimage(img)
-    remove_bkg(img)
-
-    return None
+    return img
 
 
 def create_catch_trial(img, threshold=0.7):
@@ -78,6 +70,41 @@ def create_catch_trial(img, threshold=0.7):
     ax.imshow(cv2.cvtColor(img_Out, cv2.COLOR_RGB2BGR))
     plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
     plt.show()
+    
+    return None
+
+
+def run_all_files(photos_location, ids, required_images, method='binary_mask'):
+    for id_ in ids:
+        
+        # Get images that contain required_images in the name
+        photos = os.listdir(photos_location+'/'+id_)
+        photos = [x for x in photos if not x.startswith('.')]
+        photos = sorted(photos)
+        
+        # Subset list for photo names containing those in required images
+        photos = [i for i in photos if any(b in i for b in required_images)]
+    
+        for i in range(len(photos)): # CHANGE THIS FOR ALL
+            source = photos_location+'/'+id_+'/'+photos[i]
+            # TO WRITE INTO SAME FOLDER:
+            #dest = photos_location+'/'+id_+'/'+'binary_mask'+'_'+photos[i]
+            
+            img = get_image(source)
+            if method == 'binary_mask':
+                img_Out = create_binary_mask(img)
+                # TO WRITE TO SEPARATE FOLDER FOR SAMPLE ANALYSIS:
+                dest = photos_location+'/MASKS/binary/binary_mask'+'_'+photos[i]
+            elif method == 'bkg_removal':
+                img_Out = remove_bkg(img)
+                # TO WRITE TO SEPARATE FOLDER FOR SAMPLE ANALYSIS:
+                dest = photos_location+'/MASKS/bkg_removal/bkg_removal'+'_'+photos[i]
+        
+            # SAVE STATEMENT
+            #showimage(img_Out, figsize=[5,5]) # CHANGE THIS FOR ALL 
+            cv2.imwrite(dest, img_Out)
+        
+        print(f'Completed binary mask generation files for ID {id_}')
     
     return None
  
