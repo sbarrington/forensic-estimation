@@ -1,6 +1,7 @@
 import math
 import cv2
 import cvzone
+import os
 
 from cvzone.SelfiSegmentationModule import SelfiSegmentation
 
@@ -108,3 +109,21 @@ def run_all_files(photos_location, ids, required_images, method='binary_mask'):
     
     return None
  
+def create_binary_mask(img):
+    img = remove_bkg(img, 0.70)
+    kernel = np.ones((5, 5), np.uint8)
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+    Lower_hsv = np.array([0, 0, 250]) # Manually set to 250 to keep skin tones in
+    Upper_hsv = np.array([172, 111, 255])
+
+    # creating the mask by eroding,morphing,
+    # dilating process
+    Mask = cv2.inRange(hsv, Lower_hsv, Upper_hsv)
+    Mask = cv2.erode(Mask, kernel, iterations=1)
+    Mask = cv2.morphologyEx(Mask, cv2.MORPH_OPEN, kernel)
+    Mask = cv2.dilate(Mask, kernel, iterations=1)
+
+    Mask = cv2.bitwise_not(Mask)
+
+    return Mask
