@@ -75,7 +75,7 @@ def create_catch_trial(img, threshold=0.7):
     return None
 
 
-def run_all_files(photos_location, ids, required_images, method='binary_mask'):
+def run_all_files(photos_location, ids, required_images, method='binary_mask', padding=False):
     for id_ in ids:
         
         # Get images that contain required_images in the name
@@ -92,23 +92,80 @@ def run_all_files(photos_location, ids, required_images, method='binary_mask'):
             #dest = photos_location+'/'+id_+'/'+'binary_mask'+'_'+photos[i]
             
             img = get_image(source)
+            if padding:
+                img = pad_resize(img, 1024)
+
             if method == 'binary_mask':
                 img_Out = create_binary_mask(img)
                 # TO WRITE TO SEPARATE FOLDER FOR SAMPLE ANALYSIS:
-                dest = photos_location+'/MASKS/binary/binary_mask'+'_'+photos[i]
+                dest = photos_location+'/MASKS/binary_mask/binary_mask'+'_'+photos[i][:-3]+'png'
+
             elif method == 'bkg_removal':
                 img_Out = remove_bkg(img)
                 # TO WRITE TO SEPARATE FOLDER FOR SAMPLE ANALYSIS:
-                dest = photos_location+'/MASKS/bkg_removal/bkg_removal'+'_'+photos[i]
+                dest = photos_location+'/MASKS/bkg_removal/bkg_removal'+'_'+photos[i][:-3]+'png'
+
+            elif method == 'pad_resize_only':
+                img_Out = img
+                # TO WRITE TO SEPARATE FOLDER FOR SAMPLE ANALYSIS:
+                dest = photos_location+'/MASKS/padded/padded'+'_'+photos[i][:-3]+'png'
         
             # SAVE STATEMENT
             #showimage(img_Out, figsize=[5,5]) # CHANGE THIS FOR ALL 
             cv2.imwrite(dest, img_Out)
         
-        print(f'Completed binary mask generation files for ID {id_}')
+        print(f'Completed mask generation files for ID {id_}')
     
     return None
  
+def run_all_files_samefolder(photos_location, ids, required_images, method='binary_mask', padding=False):
+    
+    ''' As with run_all_files, 
+    but writing out by ID folder 
+    rather than separate test folders.
+    '''
+
+    for id_ in ids:
+        
+        # Get images that contain required_images in the name
+        photos = os.listdir(photos_location+'/'+id_)
+        photos = [x for x in photos if not x.startswith('.')]
+        photos = sorted(photos)
+        
+        # Subset list for photo names containing those in required images
+        photos = [i for i in photos if any(b in i for b in required_images)]
+    
+        for i in range(len(photos)): # CHANGE THIS FOR ALL
+            source = photos_location+'/'+id_+'/'+photos[i]
+    
+            
+            img = get_image(source)
+            if padding:
+                img = pad_resize(img, 1024)
+
+            if method == 'binary_mask':
+                img_Out = create_binary_mask(img)
+                # TO WRITE TO SEPARATE FOLDER FOR SAMPLE ANALYSIS:
+                dest = photos_location+'/'+id_+'/'+id_+'_binary_mask'+'_'+photos[i][4:-3]+'png'
+
+            elif method == 'bkg_removal':
+                img_Out = remove_bkg(img)
+                # TO WRITE TO SEPARATE FOLDER FOR SAMPLE ANALYSIS:
+                dest = photos_location+'/'+id_+'/'+id_+'_bkg_removal'+'_'+photos[i][4:-3]+'png'
+
+            elif method == 'pad_resize_only':
+                img_Out = img
+                # TO WRITE TO SEPARATE FOLDER FOR SAMPLE ANALYSIS:
+                dest = photos_location+'/'+id_+'/'+id_+'_padded'+'_'+photos[i][4:-3]+'png'
+        
+            # SAVE STATEMENT
+            #showimage(img_Out, figsize=[5,5]) # CHANGE THIS FOR ALL 
+            cv2.imwrite(dest, img_Out)
+        
+        print(f'Completed mask generation files for ID {id_}')
+    
+    return None
+
 def create_binary_mask(img):
     img = remove_bkg(img, 0.70)
     kernel = np.ones((5, 5), np.uint8)
@@ -127,3 +184,23 @@ def create_binary_mask(img):
     Mask = cv2.bitwise_not(Mask)
 
     return Mask
+
+
+def pad_resize(img, pixels, print_progress=False, show_image=False):
+
+    dims = img.shape
+
+    pad = int((dims[0]-dims[1])/2)
+
+    # Add horizontal padding
+    img = cv2.copyMakeBorder(img, top=0, bottom=0, left=pad, right=pad, borderType=cv2.BORDER_CONSTANT)
+    # Resize
+    img = cv2.resize(img, (1024,1024), interpolation = cv2.INTER_AREA)
+
+    if print_progress:
+        print('Original Dimensions : ',dims)
+        print('Resized Dimensions : ',img.shape)
+    if show_image:
+        showimage(img)
+    
+    return img
