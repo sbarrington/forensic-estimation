@@ -38,6 +38,8 @@ def return_max_min_ID(df, var, max=True):
     return int(ID)
 
 def summarise(df):
+    '''Summary function to review dataset prior to modelling
+    '''
     print('---DATA COLLECTION SUMMARY---\n')
     heights = df['Height (cm)']
     weights = df['Weight (kg)']
@@ -81,6 +83,10 @@ def summarise(df):
     return heights, weights, ipds, n
 
 def plot_scatter(df, col1, col2):
+    '''
+    Create Plotly scatter plot of height vs. weight, 
+    illustrating the initial linear regression line of best fit. 
+    '''
     fig = px.scatter(df, x="Weight (kg)", y="Height (cm)", hover_data=['Participant ID'], title = 'Scatter of Weights and Heights', trendline='ols')
     fig.show()
 
@@ -108,6 +114,8 @@ def plot_population_comparison(var, popmean, popstd, subplot_no = 0, norm_obs = 
     return None
 
 def ttest(data):
+    '''Generic t-test of study vs. population data, assuming un-equal variances
+    '''
     result = stats.ttest_ind(data['Study'], data['Population'], 
                       equal_var=False)
     if result.pvalue > 0.05:
