@@ -125,3 +125,134 @@ def ttest(data):
 
     return None
 
+def create_MAE_summary_table(male_mean_mae_perc,
+    nonmale_mean_mae_perc,
+    mean_mae_perc,
+    male_mean_mae,
+    nonmale_mean_mae,
+    mean_mae,
+    male_mean_paper_mae_perc,
+    nonmale_mean_paper_mae_perc,
+    male_mean_paper_mae,
+    nonmale_mean_paper_mae,
+    male_regr_mae_perc,
+    nonmale_regr_mae_perc,
+    height_regression_mae_perc,
+    male_regr_mae,
+    nonmale_regr_mae,
+    height_regression_mae,
+    gender_regression_mae_perc,
+    male_regr_gender_mae_perc,
+    nonmale_regr_gender_mae_perc,
+    gender_regression_mae,
+    male_regr_gender_mae,
+    nonmale_regr_gender_mae):
+
+    columns = [['Male','Male', 
+            'Female','Female',
+            'Overall', 'Overall', 
+           ],
+        ['MAPE (%)','MAE (kg)',
+         'MAPE (%)','MAE (kg)',
+         'MAPE (%)','MAE (kg)',#, 
+            #'Standard Error','Standard Error','Standard Error', 
+            #'R^2 Value','R^2 Value','R^2 Value'
+           ]]
+    tuples = list(zip(*columns))
+    multicol = pd.MultiIndex.from_tuples(tuples)
+
+    rows = ['Gender specific mean (true data)',
+            'Height Regression', 
+            'Height Regression (gendered)', 
+            'Gender specific mean (from paper)',
+            '3D Volume Estimation', 
+            'Forensic Experts', 
+            'General Public']
+
+    results_gendered = pd.DataFrame(columns=multicol, index=rows)
+
+
+    results_gendered.loc['Gender specific mean (true data)', ('Male', 'MAPE (%)')]= male_mean_mae_perc
+    results_gendered.loc['Gender specific mean (true data)', ('Female', 'MAPE (%)')] = nonmale_mean_mae_perc
+    results_gendered.loc['Gender specific mean (true data)', ('Overall', 'MAPE (%)')] = mean_mae_perc
+
+    results_gendered.loc['Gender specific mean (true data)', ('Male', 'MAE (kg)')] = male_mean_mae
+    results_gendered.loc['Gender specific mean (true data)', ('Female', 'MAE (kg)')] = nonmale_mean_mae
+    results_gendered.loc['Gender specific mean (true data)', ('Overall', 'MAE (kg)')] = mean_mae
+
+    results_gendered.loc['Gender specific mean (from paper)', ('Male', 'MAPE (%)')] = male_mean_paper_mae_perc
+    results_gendered.loc['Gender specific mean (from paper)', ('Female', 'MAPE (%)')] = nonmale_mean_paper_mae_perc
+
+    results_gendered.loc['Gender specific mean (from paper)', ('Male', 'MAE (kg)')] = male_mean_paper_mae
+    results_gendered.loc['Gender specific mean (from paper)', ('Female', 'MAE (kg)')] = nonmale_mean_paper_mae
+
+    results_gendered.loc['Height Regression', ('Male', 'MAPE (%)')] = male_regr_mae_perc
+    results_gendered.loc['Height Regression', ('Female', 'MAPE (%)')] = nonmale_regr_mae_perc
+    results_gendered.loc['Height Regression', ('Overall', 'MAPE (%)')] = height_regression_mae_perc
+
+    results_gendered.loc['Height Regression', ('Male', 'MAE (kg)')] = male_regr_mae
+    results_gendered.loc['Height Regression', ('Female', 'MAE (kg)')] = nonmale_regr_mae
+    results_gendered.loc['Height Regression', ('Overall', 'MAE (kg)')] = height_regression_mae
+
+    results_gendered.loc['Height Regression (gendered)', ('Overall', 'MAPE (%)')] = gender_regression_mae_perc
+    results_gendered.loc['Height Regression (gendered)', ('Male', 'MAPE (%)')] = male_regr_gender_mae_perc
+    results_gendered.loc['Height Regression (gendered)', ('Female', 'MAPE (%)')] = nonmale_regr_gender_mae_perc
+
+    results_gendered.loc['Height Regression (gendered)', ('Overall', 'MAE (kg)')] = gender_regression_mae
+    results_gendered.loc['Height Regression (gendered)', ('Male', 'MAE (kg)')] = male_regr_gender_mae
+    results_gendered.loc['Height Regression (gendered)', ('Female', 'MAE (kg)')] = nonmale_regr_gender_mae
+
+    results_gendered = results_gendered.sort_values(by=[('Male', 'MAPE (%)')], ascending=True)
+
+    results_gendered.loc[:,('Male', 'MAPE (%)')] = results_gendered.loc[:,('Male', 'MAPE (%)')].astype(str)+'%'
+    results_gendered.loc[:,('Female', 'MAPE (%)')] = results_gendered.loc[:,('Female', 'MAPE (%)')].astype(str)+'%'
+    results_gendered.loc[:,('Overall', 'MAPE (%)')] = results_gendered.loc[:,('Overall', 'MAPE (%)')].astype(str)+'%'
+
+    results_gendered = results_gendered.replace('nan%', 'NaN')
+
+    return results_gendered
+
+
+def create_raw_mae_table(se_mean, 
+    mean_mae_perc, 
+    mean_mae, 
+    male_mean_mae_perc, 
+    male_mean_mae, 
+    nonmale_mean_mae_perc, 
+    nonmale_mean_mae, 
+    se_height_regression, 
+    height_regression_mae_perc, 
+    height_regression_mae, r2_height, r2_height_gender, male_mean_paper_mae_perc, male_mean_paper_mae,
+    nonmale_mean_paper_mae_perc, nonmale_mean_paper_mae, se_height_gender_regression, gender_regression_mae_perc, gender_regression_mae):
+
+    results = pd.DataFrame(columns=['Mean Absolute Error (%)', 'Mean Absolute Error (kg)', 'Standard Error: Weight', 'R^2 Value'], index=['Gender specific mean (overall, true data)', 'Gender specific mean (male, true data)', 'Gender specific mean (non-male, true data)','Height Regression', 'Height Regression (gendered)', 'Gender specific mean (male, from paper)','Gender specific mean (non-male, from paper)', '3D Volume Estimation', 'Forensic Expert', 'General Public'])
+
+    results.loc['Gender specific mean (overall, true data)', 'Standard Error: Weight'] = se_mean
+    results.loc['Gender specific mean (overall, true data)', 'Mean Absolute Error (%)'] = mean_mae_perc
+    results.loc['Gender specific mean (overall, true data)', 'Mean Absolute Error (kg)'] = mean_mae
+
+    results.loc['Gender specific mean (male, true data)', 'Mean Absolute Error (%)'] = male_mean_mae_perc
+    results.loc['Gender specific mean (male, true data)', 'Mean Absolute Error (kg)'] = male_mean_mae
+
+    results.loc['Gender specific mean (non-male, true data)', 'Mean Absolute Error (%)'] = nonmale_mean_mae_perc
+    results.loc['Gender specific mean (non-male, true data)', 'Mean Absolute Error (kg)'] = nonmale_mean_mae
+
+    results.loc['Height Regression', 'Standard Error: Weight'] = se_height_regression
+    results.loc['Height Regression', 'Mean Absolute Error (%)'] = height_regression_mae_perc
+    results.loc['Height Regression', 'Mean Absolute Error (kg)'] = height_regression_mae
+    results.loc['Height Regression', 'R^2 Value'] = r2_height
+
+    results.loc['Height Regression (gendered)', 'Standard Error: Weight'] = se_height_gender_regression
+    results.loc['Height Regression (gendered)', 'Mean Absolute Error (%)'] = gender_regression_mae_perc
+    results.loc['Height Regression (gendered)', 'Mean Absolute Error (kg)'] = gender_regression_mae
+    results.loc['Height Regression (gendered)', 'R^2 Value'] = r2_height_gender
+
+    results.loc['Gender specific mean (male, from paper)', 'Mean Absolute Error (%)'] = male_mean_paper_mae_perc
+    results.loc['Gender specific mean (male, from paper)', 'Mean Absolute Error (kg)'] = male_mean_paper_mae
+
+    results.loc['Gender specific mean (non-male, from paper)', 'Mean Absolute Error (%)'] = nonmale_mean_paper_mae_perc
+    results.loc['Gender specific mean (non-male, from paper)', 'Mean Absolute Error (kg)'] = nonmale_mean_paper_mae
+
+    results = results.sort_values(by='Mean Absolute Error (%)', ascending=True)
+
+    return results
