@@ -1,4 +1,5 @@
 import math
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -160,3 +161,14 @@ def ttest(data):
 
     return None
 
+def generate_ids(n):
+    IDs = [str(x) for x in list(range(1,n+1))]
+
+    for i in range(len(IDs)):
+        IDs[i] = '0'+IDs[i]
+        if i < 9:
+            IDs[i] = '0'+IDs[i]
+
+    print(f'Total number of IDs generated: {len(IDs)}')
+    
+    return IDs

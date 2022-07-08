@@ -78,4 +78,3 @@ def rename_files(ids, renames, retain_original_name=False):
         print(f'Completed renaming files for ID {id_}')
     
     return None
-

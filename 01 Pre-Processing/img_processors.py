@@ -204,3 +204,61 @@ def pad_resize(img, pixels, print_progress=False, show_image=False):
         showimage(img)
     
     return img
+
+
+def run_all_files_images_folder(photos_location, output_location_padded, output_location_masks, ids, required_images, method='binary_mask', padding=True, second_output_location=None):
+    
+    ''' As with run_all_files, 
+    but writing out to an overall combined 'images' input file,
+    as opposed to renaming files within given ID folder.
+    '''
+
+    for id_ in ids:
+        
+        # Get images that contain required_images in the name
+        photos = os.listdir(photos_location+'/'+id_)
+        photos = [x for x in photos if not x.startswith('.')]
+        photos = sorted(photos)
+        
+        # Subset list for photo names containing those in required images
+        photos = [i for i in photos if any(b in i for b in required_images)]
+    
+        for i in range(len(photos)): 
+            source = photos_location+'/'+id_+'/'+photos[i]
+    
+            print(f'getting image from {source}')
+
+            img = get_image(source)
+            if padding:
+                img_Out = pad_resize(img, 1024)
+                dest = output_location_padded + id_ + '_' + photos[i][4:-3]+'png'
+
+                print(f'Padded file being saved to {dest}')
+                cv2.imwrite(dest, img_Out)
+                if second_output_location is not None:
+                    dest = second_output_location + id_ + '_' + photos[i][4:-3]+'png'
+                    cv2.imwrite(dest, img_Out)
+
+            if method == 'binary_mask':
+                img_Out = create_binary_mask(img)
+                dest = output_location_masks + id_ + '_' + photos[i][4:-3]+'png'
+
+                print(f'Mask file being saved to {dest}')
+                cv2.imwrite(dest, img_Out)
+
+            elif method == 'bkg_removal':
+                img_Out = remove_bkg(img)
+                # TO WRITE TO SEPARATE FOLDER FOR SAMPLE ANALYSIS:
+                dest = photos_location+'/'+id_+'/'+id_+'_bkg_removal'+'_'+photos[i][4:-3]+'png'
+
+            elif method == 'pad_resize_only':
+                img_Out = img
+                # TO WRITE TO SEPARATE FOLDER FOR SAMPLE ANALYSIS:
+                dest = photos_location+'/'+id_+'/'+id_+'_padded'+'_'+photos[i][4:-3]+'png'
+        
+            # SAVE STATEMENT
+            cv2.imwrite(dest, img_Out)
+        
+        print(f'Completed mask generation files for ID {id_}')
+    
+    return None
