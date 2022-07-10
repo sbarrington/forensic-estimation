@@ -12,9 +12,9 @@ import pandas as pd
 
 import helpers as fn
 
-def create_gender_lookup_csv(df, photos_location, output_location):
-    
-    lookup_table = df[['Participant ID', 'gender_identity']]
+def create_lookup_csv(df, photos_location, output_location):
+
+    lookup_table = df[['Participant ID', 'gender_identity', 'Height (cm)', 'Weight (kg)', 'IPD']]
     lookup_table['Participant ID'] = fn.generate_ids(58)
 
     lookup_table.index=lookup_table['Participant ID']
@@ -23,16 +23,21 @@ def create_gender_lookup_csv(df, photos_location, output_location):
     photos = os.listdir(photos_location)
     photos = [x for x in photos if not x.startswith('.')]
 
-    photo_lookup = pd.DataFrame(columns = ['gender_identity'], index = photos)
+    photo_lookup = pd.DataFrame(columns = ['gender_identity', 'height_cm', 'weight_kg', 'ipd_cm'], index = photos)
 
     for photo in photos:
         # Get the ID from the photo
-        id_ = photo[:3]
+        id_ = ''.join(c for c in photo if c.isdigit())[:3] # Gets first 3 digits regardless of where in the name
         # Marry it to the lookup 
         photo_lookup.loc[photo, 'gender_identity'] = lookup_table.loc[id_, 'gender_identity'].lower()
+        photo_lookup.loc[photo, 'height_cm'] = lookup_table.loc[id_, 'Height (cm)']
+        photo_lookup.loc[photo, 'weight_kg'] = lookup_table.loc[id_, 'Weight (kg)']
+        photo_lookup.loc[photo, 'ipd_cm'] = lookup_table.loc[id_, 'IPD']
 
-    output_file = output_location+'/'+"gender_lookup.csv"
-    photo_lookup.to_csv(output_file)
+    output_file = output_location+'/'+"participant_lookup.csv"
+    print(f'OUTPUT FILE: {output_file}')
+    print(photo_lookup)
+    photo_lookup.to_csv(output_file, header=True)
 
     return f'Lookup table created at {output_file}'
 
@@ -51,11 +56,11 @@ def main():
     lab_data_path = inputs['lab_data_path']
     cols_to_drop = inputs['cols_to_drop']
 
-    photos_location = inputs['photos_location']
-    output_location = inputs['output_location']
+    photos_location = inputs['gender_photos_location']
+    output_location = inputs['gender_output_location']
 
     df = fn.preprocess(data_path, lab_data_path, cols_to_drop)
-    create_gender_lookup_csv(df, photos_location, output_location)
+    create_lookup_csv(df, photos_location, output_location)
 
 if __name__ == "__main__":
     main()
