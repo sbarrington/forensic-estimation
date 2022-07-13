@@ -146,7 +146,14 @@ def create_MAE_summary_table(male_mean_mae_perc,
     nonmale_regr_gender_mae_perc,
     gender_regression_mae,
     male_regr_gender_mae,
-    nonmale_regr_gender_mae):
+    nonmale_regr_gender_mae,
+    nonmale_3d_gender_mae,
+    male_3d_gender_mae,
+    overall_3d_gender_mae,
+    nonmale_3d_gender_mae_perc,
+    male_3d_gender_mae_perc,
+    overall_3d_gender_mae_perc
+    ):
 
     columns = [['Male','Male', 
             'Female','Female',
@@ -165,7 +172,7 @@ def create_MAE_summary_table(male_mean_mae_perc,
             'Height Regression', 
             'Height Regression (gendered)', 
             'Gender specific mean (from paper)',
-            '3D Volume Estimation', 
+            '3D Volume Estimation * 985', 
             'Forensic Experts', 
             'General Public']
 
@@ -202,12 +209,21 @@ def create_MAE_summary_table(male_mean_mae_perc,
     results_gendered.loc['Height Regression (gendered)', ('Male', 'MAE (kg)')] = male_regr_gender_mae
     results_gendered.loc['Height Regression (gendered)', ('Female', 'MAE (kg)')] = nonmale_regr_gender_mae
 
+    results_gendered.loc['3D Volume Estimation * 985', ('Female', 'MAE (kg)')] = nonmale_3d_gender_mae
+    results_gendered.loc['3D Volume Estimation * 985', ('Male', 'MAE (kg)')] = male_3d_gender_mae
+    results_gendered.loc['3D Volume Estimation * 985', ('Overall', 'MAE (kg)')] = overall_3d_gender_mae
+    
+    results_gendered.loc['3D Volume Estimation * 985', ('Female', 'MAPE (%)')] = nonmale_3d_gender_mae_perc
+    results_gendered.loc['3D Volume Estimation * 985', ('Male', 'MAPE (%)')] = male_3d_gender_mae_perc
+    results_gendered.loc['3D Volume Estimation * 985', ('Overall', 'MAPE (%)')] = overall_3d_gender_mae_perc
+
+
     results_gendered = results_gendered.sort_values(by=[('Male', 'MAPE (%)')], ascending=True)
 
     results_gendered.loc[:,('Male', 'MAPE (%)')] = results_gendered.loc[:,('Male', 'MAPE (%)')].astype(str)+'%'
     results_gendered.loc[:,('Female', 'MAPE (%)')] = results_gendered.loc[:,('Female', 'MAPE (%)')].astype(str)+'%'
     results_gendered.loc[:,('Overall', 'MAPE (%)')] = results_gendered.loc[:,('Overall', 'MAPE (%)')].astype(str)+'%'
-
+    
     results_gendered = results_gendered.replace('nan%', 'NaN')
 
     return results_gendered

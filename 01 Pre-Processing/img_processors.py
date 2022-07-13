@@ -206,7 +206,7 @@ def pad_resize(img, pixels, print_progress=False, show_image=False):
     return img
 
 
-def run_all_files_images_folder(photos_location, output_location_padded, output_location_masks, ids, required_images, method='binary_mask', padding=True, second_output_location=None):
+def run_all_files_images_folder(photos_location, output_location_padded, output_location_masks, ids, required_images, method='binary_mask', padding=True, second_output_location=None, ext='jpg'):
     
     ''' As with run_all_files, 
     but writing out to an overall combined 'images' input file,
@@ -231,17 +231,17 @@ def run_all_files_images_folder(photos_location, output_location_padded, output_
             img = get_image(source)
             if padding:
                 img_Out = pad_resize(img, 1024)
-                dest = output_location_padded + id_ + '_' + photos[i][4:-3]+'png'
+                dest = output_location_padded + 'padded_' + id_ + '_' + photos[i][4:-3]+ext
 
                 print(f'Padded file being saved to {dest}')
                 cv2.imwrite(dest, img_Out)
                 if second_output_location is not None:
-                    dest = second_output_location + id_ + '_' + photos[i][4:-3]+'png'
+                    dest = second_output_location + 'padded_' + id_ + '_' + photos[i][4:-3]+ext
                     cv2.imwrite(dest, img_Out)
 
             if method == 'binary_mask':
-                img_Out = create_binary_mask(img)
-                dest = output_location_masks + id_ + '_' + photos[i][4:-3]+'png'
+                img_Out = create_binary_mask(img_Out)
+                dest = output_location_masks + 'padded_' + id_ + '_' + photos[i][4:-3]+ext
 
                 print(f'Mask file being saved to {dest}')
                 cv2.imwrite(dest, img_Out)
@@ -249,12 +249,12 @@ def run_all_files_images_folder(photos_location, output_location_padded, output_
             elif method == 'bkg_removal':
                 img_Out = remove_bkg(img)
                 # TO WRITE TO SEPARATE FOLDER FOR SAMPLE ANALYSIS:
-                dest = photos_location+'/'+id_+'/'+id_+'_bkg_removal'+'_'+photos[i][4:-3]+'png'
+                dest = photos_location+'/'+id_+'/'+id_+'_bkg_removal'+'_'+photos[i][4:-3]+ext
 
             elif method == 'pad_resize_only':
                 img_Out = img
                 # TO WRITE TO SEPARATE FOLDER FOR SAMPLE ANALYSIS:
-                dest = photos_location+'/'+id_+'/'+id_+'_padded'+'_'+photos[i][4:-3]+'png'
+                dest = photos_location+'/'+id_+'/'+id_+'_padded'+'_'+photos[i][4:-3]+ext
         
             # SAVE STATEMENT
             cv2.imwrite(dest, img_Out)

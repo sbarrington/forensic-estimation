@@ -24,6 +24,9 @@ def get_gender(image, lookup_table):
     
     return gender 
 
+def get_participant_id(file_or_folder_name):
+    return ''.join(c for c in file_or_folder_name if c.isdigit())[:3]
+
 def separate_genders(jobname, lookup_location, gender_directory_location):
     lookup_table = pd.read_csv(lookup_location, index_col=0)
     genders_list = lookup_table['gender_identity'].unique()
@@ -48,7 +51,6 @@ def separate_genders(jobname, lookup_location, gender_directory_location):
             for genders in genders_list:
                 if gender == genders:
                     dest_path = gender_directory_location+'/'+'3_smplify-x_'+gender+'/smplify-x_input/'+item+'/'+image
-            print(f'Dest path:{dest_path}')
             shutil.copyfile(source_path, dest_path)
     
 
@@ -61,12 +63,14 @@ def main():
     args = parser.parse_args()
     print(args)
 
-    results_file = args.jobname
-    output_csv = args.lookup_location
-    if args.gender_directory_location == 'current':
-        lookup_table_location = os.getcwd()
+    jobname = args.jobname
+    lookup_location = args.lookup_location
+    gender_directory_location = str(args.gender_directory_location)
+
+    if gender_directory_location == 'current':
+        gender_directory_location = os.getcwd()
     else:
-        lookup_table_location = args.gender_directory_location
+        gender_directory_location = args.gender_directory_location
 
     separate_genders(jobname, lookup_location, gender_directory_location)
 
