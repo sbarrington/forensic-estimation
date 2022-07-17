@@ -10,6 +10,32 @@ import json_skeleton
 import pandas as pd
 import numpy as np
 
+def get_obj_keypoints(obj_file):
+    points = {}
+    f = open(obj_file, "r")
+    linenum = 1
+    for line in f:
+        if line.startswith("v "):
+            coords = line.split(" ")
+            x = float(coords[1])
+            y = float(coords[2])
+            z = float(coords[3])
+            points[linenum] = (x, y, z)
+
+        linenum += 1
+    
+    return {"top_head": points[9004], "r_toe": points[8489], "r_heel": points[8717], "l_toe": points[5795]}
+
+def height_from_keypoints(keypoints):
+    top_head = Point3D(keypoints["top_head"])
+    r_toe = Point3D(keypoints["r_toe"])
+    r_heel = Point3D(keypoints["r_heel"])
+    l_toe = Point3D(keypoints["l_toe"])
+
+    ground_plane = Plane(r_toe, r_heel, l_toe) 
+    print(ground_plane)
+
+    return ground_plane.distance(top_head).evalf()
 
 def get_participant_measurements(image, lookup_table_location):
 	# Ingest lookup table
@@ -29,6 +55,40 @@ def get_participant_measurements(image, lookup_table_location):
 def get_participant_id(file_or_folder_name):
 	return ''.join(c for c in file_or_folder_name if c.isdigit())[:3]
 
+def get_height(obj_input, scale_factor, participant_measurements):
+	keypoints = get_obj_keypoints(obj_input) 
+	fitted_height_unscaled = height_from_keypoints(keypoints)
+
+	fitted_height = fitted_height_unscaled*scale_factor
+
+	print("fitted height is: " + str(fitted_volume))
+
+	known_height = participant_measurements['height_cm']
+	print('   ')
+	print('---HEIGHT ESTIMATION RESULTS---')
+	print(f'Height estimated is {mass_estimated_985}cm')
+	print(f'Known height is {known_height}cm')
+
+	return fitted_height
+
+def get_volume(mesh, scale_factor, participant_measurements):
+	print(f'Unfitted volume is: {mesh.volume}')
+	fitted_mesh = mesh.apply_transform(trimesh.transformations.scale_matrix(scale_factor))
+
+	fitted_volume = fitted_mesh.volume
+
+	print("fitted volume is: " + str(fitted_volume))
+
+	#0.07205m^3 = Xkg. Denisty = mass/volume. KNOWN MASS - 75
+	known_mass = participant_measurements['weight_kg']
+	mass_estimated_985 = 985*fitted_volume
+	print('   ')
+	print('---WEIGHT ESTIMATION RESULTS---')
+	print(f'Mass estimated using 985kg/m^3 is {mass_estimated_985}kg')
+	print(f'Known mass is {known_mass}kg')
+
+	return fitted_volume, mass_estimated_985
+
 def run_participant(image, results_file, lookup_table_location):
 	print(image)
 	participant_id = get_participant_id(image)
@@ -46,24 +106,13 @@ def run_participant(image, results_file, lookup_table_location):
 	
 	obj_input = results_file+'/'+image+'/posed.obj'
 	mesh = trimesh.load(obj_input)
-	print(f'Unfitted volume is: {mesh.volume}')
-	fitted_mesh = mesh.apply_transform(trimesh.transformations.scale_matrix(scale_factor))
 
-	####fitted_volume = fitted_mesh.volume
-	keypoints = get_obj_keypoints(fitted_mesh_file)
-	fitted_height_unscaled = height_from_keypoints(keypoints)
+	fitted_volume, mass_estimated_985 = get_volume(mesh, scale_factor, participant_measurements)	
+	participant_measurements['est_volume_m3'] = fitted_volume
+	participant_measurements['est_mass_985kg_m3'] = mass_estimated_985
 
-	fitted_height = fitted_height_unscaled*scale_factor
 
-	####print("fitted height is: " + str(fitted_volume))
-
-	#0.07205m^3 = Xkg. Denisty = mass/volume. KNOWN MASS - 75
-	known_height = participant_measurements['height_cm']
-	mass_estimated_985 = 985*fitted_volume
-	print('   ')
-	print('---HEIGHT ESTIMATION RESULTS---')
-	print(f'Height estimated is {mass_estimated_985}cm')
-	print(f'Known height is {known_height}cm')
+	
 	
 	participant_measurements['est_height_cm'] = fitted_height
 	

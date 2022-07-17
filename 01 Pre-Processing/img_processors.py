@@ -205,8 +205,14 @@ def pad_resize(img, pixels, print_progress=False, show_image=False):
     
     return img
 
+#### TO DO
+def pad_resize_gopro(img, pixels, print_progress=False, show_image=False):
 
-def run_all_files_images_folder(photos_location, output_location_padded, output_location_masks, ids, required_images, method='binary_mask', padding=True, second_output_location=None, ext='jpg'):
+
+    return img
+#### 
+
+def run_all_files_images_folder(photos_location, output_location_padded, output_location_masks, ids, required_images, method='binary_mask', second_output_location=None, ext='jpg', padding_method='studio'):
     
     ''' As with run_all_files, 
     but writing out to an overall combined 'images' input file,
@@ -229,7 +235,7 @@ def run_all_files_images_folder(photos_location, output_location_padded, output_
             print(f'getting image from {source}')
 
             img = get_image(source)
-            if padding:
+            if padding_method=='studio':
                 img_Out = pad_resize(img, 1024)
                 dest = output_location_padded + 'padded_' + id_ + '_' + photos[i][4:-3]+ext
 
@@ -237,6 +243,29 @@ def run_all_files_images_folder(photos_location, output_location_padded, output_
                 cv2.imwrite(dest, img_Out)
                 if second_output_location is not None:
                     dest = second_output_location + 'padded_' + id_ + '_' + photos[i][4:-3]+ext
+                    cv2.imwrite(dest, img_Out)
+
+            #### TO DO
+            elif padding_method=='gopro':
+                img_Out = pad_resize_gopro(img, 1024)
+                dest = output_location_padded + 'padded_' + id_ + '_' + photos[i][4:-3]+ext
+
+                print(f'Padded go_pro file being saved to {dest}')
+                cv2.imwrite(dest, img_Out)
+                if second_output_location is not None:
+                    dest = second_output_location + 'padded_' + id_ + '_' + photos[i][4:-3]+ext
+                    cv2.imwrite(dest, img_Out)
+
+            #### 
+
+            elif padding_method=='None':
+                img_Out = img
+                dest = output_location_padded + '_' + id_ + '_' + photos[i][4:-3]+ext
+
+                print(f'Non-padded file being saved to {dest}')
+                cv2.imwrite(dest, img_Out)
+                if second_output_location is not None:
+                    dest = second_output_location + '_' + id_ + '_' + photos[i][4:-3]+ext
                     cv2.imwrite(dest, img_Out)
 
             if method == 'binary_mask':
