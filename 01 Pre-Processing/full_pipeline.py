@@ -19,10 +19,6 @@ def get_config_inputs(yaml_file):
 
 def main():
 
-	### [X] STEP 0: Tidy raw camera files and create participant folders- see data_processing notebook ###
-
-	### [X] STEP 1: Calibrate ###
-
 	# Calibration & args
 	yaml_config = '../XX Data/config.yaml'
 	inputs = get_config_inputs(yaml_config)
@@ -33,18 +29,22 @@ def main():
 	output_location_masks = inputs['output_location_masks']
 	output_location_smplifyx = inputs['output_location_smplifyx']
 	padding_method = inputs['padding_method']
+	method = inputs['method']
 
 	required_images = inputs['required_images']
 
-	### [X] STEP 2: Generate padded images and binary masks
+	if method == 'photoshop':
+		output_location_masks = inputs['input_location_photoshop']
+
 	ids = dp.generate_ids(n)
+	
 	# Uncomment for testing only 
 	#ids = ['003', '014', '050']
 
-	### STEP 2.5: When script fails at 35th element for unknown reason:
+	### If script fails at 35th element for unknown reason:
 	#ids = ids[35:] # Takes you from ID036 onwards
 
-	proc.run_all_files_images_folder(photos_location, output_location_openpose, output_location_masks, ids, required_images, method='binary_mask', second_output_location=output_location_smplifyx, ext='png', padding_method=padding_method)
+	proc.run_all_files_images_folder(photos_location, output_location_openpose, output_location_masks, ids, required_images, method=method, second_output_location=output_location_smplifyx, ext='png', padding_method=padding_method)
 
 
 	### STEP X: 

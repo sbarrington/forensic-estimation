@@ -4,9 +4,10 @@ import argparse
 
 import pandas as pd
 
-def create_gender_directories(genders, gender_directory_location):
+def create_gender_directories(jobname, genders, gender_directory_location):
+
     for gender in genders:
-        gender_root = gender_directory_location+'/'+'3_smplify-x_'+gender
+        gender_root = gender_directory_location+'/'+jobname+'_'+gender
         if not os.path.exists(gender_root):
             os.mkdir(gender_root)
             os.mkdir(gender_root+'/smplify-x_input')
@@ -31,15 +32,18 @@ def separate_genders(jobname, lookup_location, gender_directory_location):
     lookup_table = pd.read_csv(lookup_location, index_col=0)
     genders_list = lookup_table['gender_identity'].unique()
     
-    create_gender_directories(genders_list, gender_directory_location)
-    
+    create_gender_directories(jobname, genders_list, gender_directory_location)
+    print('Created gender directories')
+
     items = ['images', 'keypoints', 'masks']
     
     for item in items:
         photos_location = jobname+'/smplify-x_input/'+item
         images = [x for x in os.listdir(photos_location) if not x.startswith('.')]
         for image in images:
+            print(f'Image = {image}')
             source_path = photos_location+'/'+image
+            print(f'source_path = {source_path}')
             image_in = image
             if image[-15:] == '_keypoints.json':
                 image_in = image[:-15]+'.png'
@@ -47,10 +51,12 @@ def separate_genders(jobname, lookup_location, gender_directory_location):
                 image_in = image[:-13]+'.png'
                 
             gender = get_gender(image_in, lookup_table)
+            print(f'Gender = {gender}')
 
             for genders in genders_list:
                 if gender == genders:
-                    dest_path = gender_directory_location+'/'+'3_smplify-x_'+gender+'/smplify-x_input/'+item+'/'+image
+                    dest_path = gender_directory_location+'/'+jobname+'_'+gender+'/smplify-x_input/'+item+'/'+image
+                    print(f'Printing to: {dest_path}')
             shutil.copyfile(source_path, dest_path)
     
 

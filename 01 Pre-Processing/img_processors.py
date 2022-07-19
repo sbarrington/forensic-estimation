@@ -2,6 +2,7 @@ import math
 import cv2
 import cvzone
 import os
+import shutil
 
 from cvzone.SelfiSegmentationModule import SelfiSegmentation
 
@@ -205,12 +206,25 @@ def pad_resize(img, pixels, print_progress=False, show_image=False):
     
     return img
 
-#### TO DO
 def pad_resize_gopro(img, pixels, print_progress=False, show_image=False):
 
+    dims = img.shape
 
+    pad = int((dims[1]-dims[0])/2) # Swapped top and bottom dims compared to the non-gopro image
+
+    # Add VERTICAL padding
+    img = cv2.copyMakeBorder(img, top=pad, bottom=pad, left=0, right=0, borderType=cv2.BORDER_CONSTANT)
+    # Resize
+    img = cv2.resize(img, (1024,1024), interpolation = cv2.INTER_AREA)
+
+    if print_progress:
+        print('Original Dimensions : ',dims)
+        print('Resized Dimensions : ',img.shape)
+    if show_image:
+        showimage(img)
+    
     return img
-#### 
+
 
 def run_all_files_images_folder(photos_location, output_location_padded, output_location_masks, ids, required_images, method='binary_mask', second_output_location=None, ext='jpg', padding_method='studio'):
     
@@ -245,7 +259,6 @@ def run_all_files_images_folder(photos_location, output_location_padded, output_
                     dest = second_output_location + 'padded_' + id_ + '_' + photos[i][4:-3]+ext
                     cv2.imwrite(dest, img_Out)
 
-            #### TO DO
             elif padding_method=='gopro':
                 img_Out = pad_resize_gopro(img, 1024)
                 dest = output_location_padded + 'padded_' + id_ + '_' + photos[i][4:-3]+ext
@@ -256,7 +269,6 @@ def run_all_files_images_folder(photos_location, output_location_padded, output_
                     dest = second_output_location + 'padded_' + id_ + '_' + photos[i][4:-3]+ext
                     cv2.imwrite(dest, img_Out)
 
-            #### 
 
             elif padding_method=='None':
                 img_Out = img
@@ -284,10 +296,40 @@ def run_all_files_images_folder(photos_location, output_location_padded, output_
                 img_Out = img
                 # TO WRITE TO SEPARATE FOLDER FOR SAMPLE ANALYSIS:
                 dest = photos_location+'/'+id_+'/'+id_+'_padded'+'_'+photos[i][4:-3]+ext
+
+            elif method == 'photoshop':
+                img_Out = img
+                if padding_method == 'gopro':
+                    image_type = photos[i][4:-13]
+                    dest = output_location_masks + image_type +  '/padded_' + id_ + '_' + photos[i][4:-3]+ext
+                else:
+                    dest =  output_location_masks + 'padded_' + id_ + '_' + photos[i][4:-3]+ext
+
+                print(f'Photoshop input file being saved to {dest}')
+                cv2.imwrite(dest, img_Out)
         
             # SAVE STATEMENT
             cv2.imwrite(dest, img_Out)
         
         print(f'Completed mask generation files for ID {id_}')
     
+    return None
+
+
+def rename_files(photos_location):    
+
+    photos = os.listdir(photos_location)
+    photos = [x for x in photos if not x.startswith('.')]
+    photos = sorted(photos)
+
+    for i in range(0, len(photos)):
+        photo_path = photos_location+photos[i]
+        photo_stem = os.path.dirname(photo_path)
+        #shutil.move(photo_path, photo_stem+'/padded_'+photo)
+        old_file = os.path.join(photos_location, photos[i])
+        print({old_file})
+        new_file = os.path.join(photos_location, photo_stem+"/padded_"+photos[i]) # Renames ID_image_DSC_XXXX.jpg to padded_ID_image_DSC_XXXX.jpg
+        print(new_file)
+        os.rename(old_file, new_file)
+
     return None
