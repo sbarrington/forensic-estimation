@@ -91,7 +91,7 @@ def get_volume(mesh, scale_factor, participant_measurements):
 
 	return fitted_volume, mass_estimated_985
 
-def run_participant(image, results_file, lookup_table_location):
+def run_participant(image, results_file, lookup_table_location, gender):
 	print(image)
 	participant_id = get_participant_id(image)
 	posed_json_input = results_file+'/'+image+'/posed.json'
@@ -103,14 +103,19 @@ def run_participant(image, results_file, lookup_table_location):
 	known_ipd = participant_measurements['ipd_cm']
 	print(f'Measured IPD = {known_ipd}cm')
 	print(f'Model IPD = {ipd}cm')
+	# UPDATE: 
+	# ADD IN ADDITIONAL SCALING FOR MEASUREMENT CORRECTION
+        print(f'Original IPD was {known_ipd}')
+	known_ipd = known_ipd * ((((6/4.9)-1)/2)+1) # To try and equalise means 	# USE GENDER AVERAGES
+	# FOR USING POPULATION AVERAGES
+	#if gender == 'male': 
+	#	known_ipd = 6.40
+	#elif gender == 'female':
+	#	known_ipd = 6.17
+	print(f'Using ipd of = {known_ipd}')
+	# Continue
 	scale_factor = known_ipd/ipd
 	
-	# FOR USING POPULATION AVERAGES
-	if '_male' in output_csv: 
-		known_ipd = 6.40
-	elif '_female' in output_csv:
-		known_ipd = 6.17
-
 	print(f'Using scale factor: {scale_factor} (model*sf = reality)')
 	
 	obj_input = results_file+'/'+image+'/posed.obj'
@@ -134,6 +139,7 @@ def main():
 	parser.add_argument('--results_file', type=str, required=True, help='Location of the photo files that each contain 000.pkl, alongside 000.json and 000.obj from "pose_model_for_simulation.py"')
 	parser.add_argument('--csv_output_file', type=str, default="volume_results.csv", help='Where to store the final output volume CSV')
 	parser.add_argument('--lookup_table_location', type=str, help='Location of participant lookup table')
+	parser.add_argument('--gender', type=str)
 
 	args = parser.parse_args()
 	print(args)
@@ -150,7 +156,7 @@ def main():
 
 	for image in images:
 		print(f'Running estimates for image: {image}')
-		estimates = run_participant(image, results_file, lookup_table_location)
+		estimates = run_participant(image, results_file, lookup_table_location, gender)
 		results_table = results_table.append(estimates, ignore_index=True)
 	results_table.index=results_table['id']
 	results_table = results_table.drop(['Unnamed: 0', 'id'], axis=1)

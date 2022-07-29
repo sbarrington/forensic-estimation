@@ -1,4 +1,5 @@
 
+
 # arg: input directory of images, job name, gender 
 
 # make input directory under "data/jobname", should have
@@ -30,5 +31,6 @@ done
 python get_volume_and_height_from_mesh.py --results_file  $jobname/results/results \
 --csv_output_file $jobname/results/$output_file_name \
 --lookup_table_location $lookup_table_location \
+--gender $gender \
 
 echo "JOB COMPLETED"
