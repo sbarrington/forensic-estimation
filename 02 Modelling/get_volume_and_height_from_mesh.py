@@ -104,6 +104,13 @@ def run_participant(image, results_file, lookup_table_location):
 	print(f'Measured IPD = {known_ipd}cm')
 	print(f'Model IPD = {ipd}cm')
 	scale_factor = known_ipd/ipd
+	
+	# FOR USING POPULATION AVERAGES
+	if '_male' in output_csv: 
+		known_ipd = 6.40
+	elif '_female' in output_csv:
+		known_ipd = 6.17
+
 	print(f'Using scale factor: {scale_factor} (model*sf = reality)')
 	
 	obj_input = results_file+'/'+image+'/posed.obj'
