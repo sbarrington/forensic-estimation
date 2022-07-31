@@ -91,6 +91,30 @@ def get_volume(mesh, scale_factor, participant_measurements):
 
 	return fitted_volume, mass_estimated_985
 
+def compute_ipd_correction_factor(known_ipd, ipd, method=None, user_specific_ipd_correction=None):
+
+	if method == 'user_specific_correction':
+		# Rescale known_ipd to account for individual user correction
+		actual_ipd = known_ipd*user_specific_ipd_correction
+		known_ipd = actual_ipd
+
+	if method == 'gender_means':
+		# FOR USING POPULATION AVERAGES
+		if gender == 'male': 
+			known_ipd = 6.40
+		elif gender == 'female':
+			known_ipd = 6.17
+		print(f'Using ipd of = {known_ipd}')
+
+	if method == 'single_measurement_correction':
+		print(f'Measured IPD = {known_ipd}cm')
+		print(f'Model IPD = {ipd}cm')
+        print(f'Original IPD was {known_ipd}')
+		known_ipd = known_ipd * ((((6/4.9)-1)/2)+1) # To try and equalise means
+
+	return adjusted_ipd
+
+
 def run_participant(image, results_file, lookup_table_location, gender):
 	print(image)
 	participant_id = get_participant_id(image)
@@ -101,22 +125,11 @@ def run_participant(image, results_file, lookup_table_location, gender):
 	
 	participant_measurements = get_participant_measurements(image,lookup_table_location)
 	known_ipd = participant_measurements['ipd_cm']
-	print(f'Measured IPD = {known_ipd}cm')
-	print(f'Model IPD = {ipd}cm')
-	# UPDATE: 
-	# ADD IN ADDITIONAL SCALING FOR MEASUREMENT CORRECTION
-        print(f'Original IPD was {known_ipd}')
-	known_ipd = known_ipd * ((((6/4.9)-1)/2)+1) # To try and equalise means 	# USE GENDER AVERAGES
-	# FOR USING POPULATION AVERAGES
-	#if gender == 'male': 
-	#	known_ipd = 6.40
-	#elif gender == 'female':
-	#	known_ipd = 6.17
-	print(f'Using ipd of = {known_ipd}')
-	# Continue
+
+	#adjusted_ipd = compute_ipd_correction_factor(known_ipd, ipd, method, user_specific_ipd_correction)
 	scale_factor = known_ipd/ipd
 	
-	print(f'Using scale factor: {scale_factor} (model*sf = reality)')
+	#print(f'Using scale factor: {scale_factor} (model*sf = reality)')
 	
 	obj_input = results_file+'/'+image+'/posed.obj'
 	mesh = trimesh.load(obj_input)
@@ -127,8 +140,19 @@ def run_participant(image, results_file, lookup_table_location, gender):
 	
 	fitted_height = get_height(obj_input, scale_factor, participant_measurements)
 	participant_measurements['est_height_cm'] = fitted_height
+
+	participant_measurements['adjusted_ipd'] = ''
 	
 	return participant_measurements
+
+def get_user_specific_ipd_correction(estimates):
+	estimated_neutral_height = estimates['est_height_cm']
+	actual_height = estimates['height_cm']
+	model_to_actual_height_adjustment = actual_height/estimated_neutral_height
+	adjusted_ipd = estimated['ipd']*model_to_actual_height_adjustment
+
+	return adjusted_ipd
+
 
 def main():
 	# Directory is jobname, which is 3_smplify_x_female. In here there will be 'results'. 
@@ -153,11 +177,18 @@ def main():
 	columns_from_lookup = pd.read_csv(lookup_table_location).columns
 	#columns_from_lookup = columns_from_lookup.append("image")
 	results_table = pd.DataFrame(columns=columns_from_lookup)
+	results_table['adjusted_ipd'] = np.nan()
 
 	for image in images:
-		print(f'Running estimates for image: {image}')
-		estimates = run_participant(image, results_file, lookup_table_location, gender)
+		print(f'Running estimates for image: {image}') 
+		if 'rotation_0_' in image:
+			estimates = run_participant(image, results_file, lookup_table_location, gender)
+			adjusted_ipd = get_user_specific_ipd_correction(estimates)
+		
+		estimates['adjusted_ipd'] = adjusted_ipd
+	
 		results_table = results_table.append(estimates, ignore_index=True)
+	
 	results_table.index=results_table['id']
 	results_table = results_table.drop(['Unnamed: 0', 'id'], axis=1)
 	results_table = results_table.sort_index()
