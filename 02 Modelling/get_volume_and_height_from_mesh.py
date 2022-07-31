@@ -91,28 +91,28 @@ def get_volume(mesh, scale_factor, participant_measurements):
 
 	return fitted_volume, mass_estimated_985
 
-def compute_ipd_correction_factor(known_ipd, ipd, method=None, user_specific_ipd_correction=None):
+# def compute_ipd_correction_factor(known_ipd, ipd, method=None, user_specific_ipd_correction=None):
 
-	if method == 'user_specific_correction':
-		# Rescale known_ipd to account for individual user correction
-		actual_ipd = known_ipd*user_specific_ipd_correction
-		known_ipd = actual_ipd
+# 	if method == 'user_specific_correction':
+# 		# Rescale known_ipd to account for individual user correction
+# 		actual_ipd = known_ipd*user_specific_ipd_correction
+# 		known_ipd = actual_ipd
 
-	if method == 'gender_means':
-		# FOR USING POPULATION AVERAGES
-		if gender == 'male': 
-			known_ipd = 6.40
-		elif gender == 'female':
-			known_ipd = 6.17
-		print(f'Using ipd of = {known_ipd}')
+# 	if method == 'gender_means':
+# 		# FOR USING POPULATION AVERAGES
+# 		if gender == 'male': 
+# 			known_ipd = 6.40
+# 		elif gender == 'female':
+# 			known_ipd = 6.17
+# 		print(f'Using ipd of = {known_ipd}')
 
-	if method == 'single_measurement_correction':
-		print(f'Measured IPD = {known_ipd}cm')
-		print(f'Model IPD = {ipd}cm')
-        print(f'Original IPD was {known_ipd}')
-		known_ipd = known_ipd * ((((6/4.9)-1)/2)+1) # To try and equalise means
+# 	if method == 'single_measurement_correction':
+# 		print(f'Measured IPD = {known_ipd}cm')
+# 		print(f'Model IPD = {ipd}cm')
+#         print(f'Original IPD was {known_ipd}')
+# 		known_ipd = known_ipd * ((((6/4.9)-1)/2)+1) # To try and equalise means
 
-	return adjusted_ipd
+# 	return adjusted_ipd
 
 
 def run_participant(image, results_file, lookup_table_location, gender):
@@ -126,10 +126,9 @@ def run_participant(image, results_file, lookup_table_location, gender):
 	participant_measurements = get_participant_measurements(image,lookup_table_location)
 	known_ipd = participant_measurements['ipd_cm']
 
-	#adjusted_ipd = compute_ipd_correction_factor(known_ipd, ipd, method, user_specific_ipd_correction)
 	scale_factor = known_ipd/ipd
 	
-	#print(f'Using scale factor: {scale_factor} (model*sf = reality)')
+	print(f'Using scale factor: {scale_factor} (model*sf = reality)')
 	
 	obj_input = results_file+'/'+image+'/posed.obj'
 	mesh = trimesh.load(obj_input)
@@ -140,8 +139,33 @@ def run_participant(image, results_file, lookup_table_location, gender):
 	
 	fitted_height = get_height(obj_input, scale_factor, participant_measurements)
 	participant_measurements['est_height_cm'] = fitted_height
+	
+	return participant_measurements
 
-	participant_measurements['adjusted_ipd'] = ''
+def run_participant_with_ipd_corr(image, results_file, lookup_table_location, gender, adjusted_ipd):
+	print(image)
+	participant_id = get_participant_id(image)
+	posed_json_input = results_file+'/'+image+'/posed.json'
+	print(f'POSED JSON INPUT: {posed_json_input}')
+	posed = json_skeleton.JsonSkeleton(posed_json_input)
+	ipd = posed.get_IPD()*100 # Convert to centimeters
+	
+	participant_measurements = get_participant_measurements(image,lookup_table_location)
+	known_ipd = adjusted_ipd
+
+	scale_factor = known_ipd/ipd
+	
+	print(f'Using scale factor: {scale_factor} (model*sf = reality)')
+	
+	obj_input = results_file+'/'+image+'/posed.obj'
+	mesh = trimesh.load(obj_input)
+
+	fitted_volume, mass_estimated_985 = get_volume(mesh, scale_factor, participant_measurements)	
+	participant_measurements['est_volume_m3'] = fitted_volume
+	participant_measurements['est_mass_985kg_m3'] = mass_estimated_985
+	
+	fitted_height = get_height(obj_input, scale_factor, participant_measurements)
+	participant_measurements['est_height_cm'] = fitted_height
 	
 	return participant_measurements
 
@@ -149,7 +173,7 @@ def get_user_specific_ipd_correction(estimates):
 	estimated_neutral_height = estimates['est_height_cm']
 	actual_height = estimates['height_cm']
 	model_to_actual_height_adjustment = actual_height/estimated_neutral_height
-	adjusted_ipd = estimated['ipd']*model_to_actual_height_adjustment
+	adjusted_ipd = estimates['ipd']*model_to_actual_height_adjustment
 
 	return adjusted_ipd
 
@@ -163,7 +187,6 @@ def main():
 	parser.add_argument('--results_file', type=str, required=True, help='Location of the photo files that each contain 000.pkl, alongside 000.json and 000.obj from "pose_model_for_simulation.py"')
 	parser.add_argument('--csv_output_file', type=str, default="volume_results.csv", help='Where to store the final output volume CSV')
 	parser.add_argument('--lookup_table_location', type=str, help='Location of participant lookup table')
-	parser.add_argument('--gender', type=str)
 
 	args = parser.parse_args()
 	print(args)
@@ -182,11 +205,12 @@ def main():
 	for image in images:
 		print(f'Running estimates for image: {image}') 
 		if 'rotation_0_' in image:
-			estimates = run_participant(image, results_file, lookup_table_location, gender)
-			adjusted_ipd = get_user_specific_ipd_correction(estimates)
+			ipd_estimates = run_participant(image, results_file, lookup_table_location)
+			adjusted_ipd = get_user_specific_ipd_correction(ipd_estimates)
+		
+		estimates = run_participant_with_ipd_corr(image, results_file, lookup_table_location, adjusted_ipd)
 		
 		estimates['adjusted_ipd'] = adjusted_ipd
-	
 		results_table = results_table.append(estimates, ignore_index=True)
 	
 	results_table.index=results_table['id']
