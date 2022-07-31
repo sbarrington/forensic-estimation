@@ -192,3 +192,69 @@ Treat separate distributions/regression model inputs
 Another baseline:
 - use ground truth height to scale model - this is how good you can do with the 3d modelling with a beter height. 
 - Also do the 3d height estimation + weight regression
+
+## Reference Commands
+
+To run an SSH job that continues after the SSH window closes/internet connection drops:
+- Add the nohup command infront of the usual bash script 
+- Can direct it to either an output.txt file or it'll go to a nohup.out file by default 
+- e.g. nohup usual_bash_command > output.txt
+
+python separate_genders.py --jobname 3_smplify-x_maskcorrection --lookup_location 3_smplify-x_maskcorrection/smplify-x_input/participant_lookup.csv --gender_directory_location 'current'
+
+python separate_genders.py --jobname 5_smplify-x_gopro --lookup_location 5_smplify-x_gopro/smplify-x_input/participant_lookup.csv --gender_directory_location 'current'
+
+WINDOW 1
+conda activate hw_render
+bash fit_images_sil.sh ~/3_smplify-x_maskcorrection_male male results 3000 0.01 
+WINDOW 2
+# In second SSH connection window:
+conda activate hw_render
+bash fit_images_sil.sh ~/3_smplify-x_maskcorrection_female female results 3000 0.01 
+
+
+WINDOW 1
+conda activate hw_render
+bash fit_images_sil.sh ~/5_smplify-x_gopro_male male results 3000 0.01 
+WINDOW 2
+# In second SSH connection window:
+conda activate hw_render
+bash fit_images_sil.sh ~/5_smplify-x_gopro_female female results 3000 0.01 
+
+Commands:
+```bash
+# Mask correction only
+bash get_volumes_and_heights.sh ~/3_smplify-x_maskcorrection_female female 3_smplify-x_maskcorrection/smplify-x_input/participant_lookup.csv maskcorrection_overall_results_female.csv
+
+bash get_volumes_and_heights.sh ~/3_smplify-x_maskcorrection_male male 3_smplify-x_maskcorrection/smplify-x_input/participant_lookup.csv maskcorrection_overall_results_male.csv
+
+# GoPro - legacy, before IPD lookup and adjustment
+bash get_volumes_and_heights.sh ~/5_smplify-x_gopro_male male 5_smplify-x_gopro/smplify-x_input/participant_lookup.csv gopro_hw_overall_results_male.csv
+```
+
+## Updated Process: With Neutral-Pose IPD Adjustment
+Additional steps:
+* Create an IPD adjustment lookup table with each participant's adjusted IPD
+* Run the Studio and GoPro images using two different scripts = 'gopro_get_volumes_and_heights.sh' and 'get_volumes_and_heights.sh'
+* Note that the 'get_volumes_and_heights_from_mesh.py' script has been updated to <b>only</b> use adjusted IPD. To revert back to using the measured IPD, this script will need to be updated
+* NOTE: GO PRO SCRIPT ALSO TAKES AN ADDITONAL ARGUMENT FOR THE IPD ADJUSTMENT TABLE (that lives in the studio folder as this is where the neutral poses are, and where the lookups were calculated)
+
+<b>NOTE: in order to run the height and weight extractions only (e.g. not the re-posing to obtain the 'posed' models), comment out the for-loop section in 'get_volumes_and_heights.sh' that runs 'smplify-x-sil/smplifyx/pose_model_for_simulation.py'</b>
+
+```bash
+# FIRST: CREATE ADJUSTED IPD LOOKUP
+python create_adjusted_ipd_lookup.py --jobname ~/3_smplify-x_maskcorrection_female
+python create_adjusted_ipd_lookup.py --jobname ~/3_smplify-x_maskcorrection_male
+
+# THEN: IPD correction, either studio or GoPro
+bash get_volumes_and_heights.sh ~/3_smplify-x_maskcorrection_male male 3_smplify-x_maskcorrection/smplify-x_input/participant_lookup.csv ipdcorr_overall_results_male.csv
+
+bash get_volumes_and_heights.sh ~/3_smplify-x_maskcorrection_female female 3_smplify-x_maskcorrection/smplify-x_input/participant_lookup.csv ipdcorr_overall_results_female.csv
+
+# GoPro with IPD adjustment
+bash gopro_get_volumes_and_heights.sh ~/5_smplify-x_gopro_male male 5_smplify-x_gopro/smplify-x_input/participant_lookup.csv gopro_ipdcorr_overall_results_male.csv 3_smplify-x_maskcorrection_male/smplify-x_input/adjusted_ipd_lookup.csv
+
+bash gopro_get_volumes_and_heights.sh ~/5_smplify-x_gopro_female female 5_smplify-x_gopro/smplify-x_input/participant_lookup.csv gopro_ipdcorr_overall_results_female.csv 3_smplify-x_maskcorrection_female/smplify-x_input/adjusted_ipd_lookup.csv
+```
+
+

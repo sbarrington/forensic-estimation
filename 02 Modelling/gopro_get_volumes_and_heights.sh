@@ -8,6 +8,7 @@ jobname=$1
 gender=$2
 lookup_table_location=$3
 output_file_name=$4
+adjusted_ipd_table_location=$5
 
 for img in $jobname/results/results/*
 do
@@ -28,8 +29,9 @@ do
 
 done
 
-python get_volume_and_height_from_mesh.py --results_file  $jobname/results/results \
+python gopro_get_volume_and_height_from_mesh.py --results_file  $jobname/results/results \
 --csv_output_file $jobname/results/$output_file_name \
 --lookup_table_location $lookup_table_location \
+--adjusted_ipd_table_location $adjusted_ipd_table_location \
 
 echo "JOB COMPLETED"

@@ -96,6 +96,13 @@ def run_participant(image, results_file, lookup_table_location):
 	
 	return participant_measurements
 
+def get_user_specific_ipd_correction(estimates):
+	estimated_neutral_height = estimates['est_height_cm']
+	actual_height = estimates['height_cm']
+	model_to_actual_height_adjustment = actual_height/estimated_neutral_height
+	adjusted_ipd = estimates['ipd_cm']*model_to_actual_height_adjustment
+
+	return adjusted_ipd
 
 def main():
 
@@ -105,10 +112,11 @@ def main():
 	args = parser.parse_args()
 	print(args)
 
-	jobname = args.jobname # WITH A SLASH AT END
-	results_file = jobname+'results/results' # NO SLASH AT END, STUDIO IMAGES ONLY!
-	output_csv = jobname+'smplify-x_input/adjusted_ipd_lookup.csv'
-	lookup_table_location = jobname+'smplify-x_input/participant_lookup.csv'
+	jobname = args.jobname # WITHOUT A SLASH AT END
+	results_file = jobname+'/results/results' # NO SLASH AT END, STUDIO IMAGES ONLY!
+	output_csv = jobname+'/smplify-x_input/adjusted_ipd_lookup.csv'
+	jobname_without_gender = '_'.join(jobname.split('_')[:-1])
+	lookup_table_location = jobname_without_gender+'/smplify-x_input/participant_lookup.csv'
 
 	images = [x for x in os.listdir(results_file) if not x.startswith('.')]
 
@@ -130,9 +138,8 @@ def main():
 
 	print(ipd_table)
 	ipd_lookup = ipd_table[['id', 'adjusted_ipd']].drop_duplicates()
-	ipd_lookup.index=ipd_lookup['id']
 	ipd_lookup['adjusted_ipd'] = ipd_lookup['adjusted_ipd'].astype(float)
-	ipd_lookup.to_csv(output_csv, header=True)
+	ipd_lookup.to_csv(output_csv, header=True, index=False)
 
 	return None
 

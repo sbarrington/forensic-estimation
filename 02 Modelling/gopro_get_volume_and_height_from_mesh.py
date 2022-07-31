@@ -187,6 +187,7 @@ def main():
 	parser.add_argument('--results_file', type=str, required=True, help='Location of the photo files that each contain 000.pkl, alongside 000.json and 000.obj from "pose_model_for_simulation.py"')
 	parser.add_argument('--csv_output_file', type=str, default="volume_results.csv", help='Where to store the final output volume CSV')
 	parser.add_argument('--lookup_table_location', type=str, help='Location of participant lookup table')
+	parser.add_argument('--adjusted_ipd_table_location', type=str, help='IPD adjustment table input')
 
 	args = parser.parse_args()
 	print(args)
@@ -194,36 +195,21 @@ def main():
 	results_file = args.results_file
 	output_csv = args.csv_output_file
 	lookup_table_location = args.lookup_table_location
+	ipd_lookup_location = args.adjusted_ipd_table_location
 
 	images = [x for x in os.listdir(results_file) if not x.startswith('.')]
 
 	columns_from_lookup = pd.read_csv(lookup_table_location).columns
-	#columns_from_lookup = columns_from_lookup.append("image")
 	results_table = pd.DataFrame(columns=columns_from_lookup)
-	ipd_table = results_table.copy()
 
-	for image in images:
-		print(f'Running estimates for image: {image}') 
-		if 'rotation_0_' in image:
-			participant_id = get_participant_id(image)
-			ipd_estimates = run_participant(image, results_file, lookup_table_location)
-			adjusted_ipd = get_user_specific_ipd_correction(ipd_estimates)
-
-			ipd_estimates['adjusted_ipd'] = adjusted_ipd
-			ipd_table = ipd_table.append(ipd_estimates, ignore_index=True)
-
-		else:
-			continue
-
-	print(ipd_table)
-	ipd_lookup = ipd_table[['id', 'adjusted_ipd']].drop_duplicates()
+	ipd_lookup = pd.read_csv(ipd_lookup_location)
 	ipd_lookup.index=ipd_lookup['id']
 	ipd_lookup['adjusted_ipd'] = ipd_lookup['adjusted_ipd'].astype(float)
 
 	for image in images:
 		print(f'Running estimates for image: {image}') 
 		participant_id = str(get_participant_id(image))
-		adjusted_ipd = ipd_lookup.loc[participant_id]['adjusted_ipd']
+		adjusted_ipd = ipd_lookup.loc[int(participant_id)]['adjusted_ipd']
 		print(f'USING ADJUSTED IPD OF {adjusted_ipd}')
 
 		estimates = run_participant_with_ipd_corr(image, results_file, lookup_table_location, adjusted_ipd)
