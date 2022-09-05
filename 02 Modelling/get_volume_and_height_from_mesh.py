@@ -179,14 +179,14 @@ def run_participant_with_ipd_corr(image, results_file, lookup_table_location, ad
 	
 	return participant_measurements
 
-def get_user_specific_ipd_correction(estimates, image):
+def get_user_specific_ipd_correction(estimates, image, lookup_table_location):
 	estimated_neutral_height = estimates['est_height_cm']
 	actual_height = estimates['height_cm']
 	model_to_actual_height_adjustment = actual_height/estimated_neutral_height
 	adjusted_ipd = estimates['ipd_cm']*model_to_actual_height_adjustment
 
 	# OVERWRITE: ADJUST IPD BY U.S.A GENDER AVERAGE INSTEAD OF HEIGHT SPECIFIC CONVERSION
-	gender = get_participant_gender(image)
+	gender = get_participant_gender(image, lookup_table_location)
 
 	if gender == 'male': 
  			adjusted_ipd = 6.40
@@ -227,7 +227,7 @@ def main():
 		if 'rotation_0_' in image:
 			participant_id = get_participant_id(image)
 			ipd_estimates = run_participant(image, results_file, lookup_table_location)
-			adjusted_ipd = get_user_specific_ipd_correction(ipd_estimates, image)
+			adjusted_ipd = get_user_specific_ipd_correction(ipd_estimates, image, lookup_table_location)
 
 			ipd_estimates['adjusted_ipd'] = adjusted_ipd
 			ipd_table = ipd_table.append(ipd_estimates, ignore_index=True)
