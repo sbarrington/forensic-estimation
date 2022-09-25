@@ -83,7 +83,7 @@ def get_volume(mesh, scale_factor, participant_measurements):
 
 	#0.07205m^3 = Xkg. Denisty = mass/volume. KNOWN MASS - 75
 	known_mass = participant_measurements['weight_kg']
-	mass_estimated_985 = 985*fitted_volume
+	mass_estimated_985 = 1023*fitted_volume # Updated to reflect 34% bodyfat estimation
 	print('   ')
 	print('---WEIGHT ESTIMATION RESULTS---')
 	print(f'Mass estimated using 985kg/m^3 is {mass_estimated_985}kg')
@@ -162,7 +162,7 @@ def run_participant_with_ipd_corr(image, results_file, lookup_table_location, ad
 
 	fitted_volume, mass_estimated_985 = get_volume(mesh, scale_factor, participant_measurements)	
 	participant_measurements['est_volume_m3'] = fitted_volume
-	participant_measurements['est_mass_985kg_m3'] = mass_estimated_985
+	participant_measurements['est_mass_1023kg_m3'] = mass_estimated_985
 	
 	fitted_height = get_height(obj_input, scale_factor, participant_measurements)
 	participant_measurements['est_height_cm'] = fitted_height

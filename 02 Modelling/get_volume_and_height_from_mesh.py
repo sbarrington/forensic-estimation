@@ -13,31 +13,31 @@ import numpy as np
 from sympy import Plane, Point3D
 
 def get_obj_keypoints(obj_file):
-    points = {}
-    f = open(obj_file, "r")
-    linenum = 1
-    for line in f:
-        if line.startswith("v "):
-            coords = line.split(" ")
-            x = float(coords[1])
-            y = float(coords[2])
-            z = float(coords[3])
-            points[linenum] = (x, y, z)
+	points = {}
+	f = open(obj_file, "r")
+	linenum = 1
+	for line in f:
+		if line.startswith("v "):
+			coords = line.split(" ")
+			x = float(coords[1])
+			y = float(coords[2])
+			z = float(coords[3])
+			points[linenum] = (x, y, z)
 
-        linenum += 1
-    
-    return {"top_head": points[9004], "r_toe": points[8489], "r_heel": points[8717], "l_toe": points[5795]}
+		linenum += 1
+	
+	return {"top_head": points[9004], "r_toe": points[8489], "r_heel": points[8717], "l_toe": points[5795]}
 
 def height_from_keypoints(keypoints):
-    top_head = Point3D(keypoints["top_head"])
-    r_toe = Point3D(keypoints["r_toe"])
-    r_heel = Point3D(keypoints["r_heel"])
-    l_toe = Point3D(keypoints["l_toe"])
+	top_head = Point3D(keypoints["top_head"])
+	r_toe = Point3D(keypoints["r_toe"])
+	r_heel = Point3D(keypoints["r_heel"])
+	l_toe = Point3D(keypoints["l_toe"])
 
-    ground_plane = Plane(r_toe, r_heel, l_toe) 
-    print(ground_plane)
+	ground_plane = Plane(r_toe, r_heel, l_toe) 
+	print(ground_plane)
 
-    return ground_plane.distance(top_head).evalf()
+	return ground_plane.distance(top_head).evalf()
 
 def get_participant_measurements(image, lookup_table_location):
 	# Ingest lookup table
@@ -93,10 +93,10 @@ def get_volume(mesh, scale_factor, participant_measurements):
 
 	#0.07205m^3 = Xkg. Denisty = mass/volume. KNOWN MASS - 75
 	known_mass = participant_measurements['weight_kg']
-	mass_estimated_985 = 985*fitted_volume
+	mass_estimated_985 = 1023*fitted_volume # Updated to reflect 34% bodyfat estimation
 	print('   ')
 	print('---WEIGHT ESTIMATION RESULTS---')
-	print(f'Mass estimated using 985kg/m^3 is {mass_estimated_985}kg')
+	print(f'Mass estimated using 1023kg/m^3 is {mass_estimated_985}kg')
 	print(f'Known mass is {known_mass}kg')
 
 	return fitted_volume, mass_estimated_985
@@ -172,7 +172,7 @@ def run_participant_with_ipd_corr(image, results_file, lookup_table_location, ad
 
 	fitted_volume, mass_estimated_985 = get_volume(mesh, scale_factor, participant_measurements)	
 	participant_measurements['est_volume_m3'] = fitted_volume
-	participant_measurements['est_mass_985kg_m3'] = mass_estimated_985
+	participant_measurements['est_mass_1023kg_m3'] = mass_estimated_985
 	
 	fitted_height = get_height(obj_input, scale_factor, participant_measurements)
 	participant_measurements['est_height_cm'] = fitted_height
@@ -188,12 +188,18 @@ def get_user_specific_ipd_correction(estimates, image, lookup_table_location):
 	# OVERWRITE: ADJUST IPD BY U.S.A GENDER AVERAGE INSTEAD OF HEIGHT SPECIFIC CONVERSION
 	gender = get_participant_gender(image, lookup_table_location)
 
+	# Updated: scale IPD to reflect 3D model adjustment factor
+	adjustment = 0.95
 	if gender == 'male': 
- 			adjusted_ipd = 6.40
- 			print(f'Using MALE adjusted IPD of {adjusted_ipd}cm')
- 		elif gender == 'female':
- 			adjusted_ipd = 6.17
- 			print(f'Using FEMALE adjusted IPD of {adjusted_ipd}cm')
+		adjusted_ipd = 6.40
+		adjusted_ipd = adjusted_ipd * adjustment
+		print(f'Using MALE adjusted IPD of {adjusted_ipd}cm')
+		# Updated: scale IPD to reflect 3D model adjustment factor
+	elif gender == 'female':
+		adjusted_ipd = 6.17
+		adjusted_ipd = adjusted_ipd * adjustment
+		print(f'Using FEMALE adjusted IPD of {adjusted_ipd}cm')
+		# Updated: scale IPD to reflect 3D model adjustment factor
 
 	return adjusted_ipd
 

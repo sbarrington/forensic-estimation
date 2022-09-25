@@ -13,18 +13,18 @@ for img in $jobname/results/results/*
 do
     echo "JOB RUNNING: $img/"
 
-    python smplify-x-sil/smplifyx/pose_model_for_simulation.py --pkl $img/000.pkl \
-        --posed_mesh $img/posed.obj \
-        --skeleton_out $img/posed.json  \
-        --config smplify-x-sil/cfg_files/fit_smplx.yaml \
-        --gender $gender \
-        --data_folder NaN \
-        --output_folder NaN \
-        --visualize="True" \
-        --model_folder models \
-        --vposer_ckpt vposer_v1_0 \
-        --part_segm_fn smplify-x-sil/smplx_parts_segm.pkl \
-        --use_cuda="False"
+    # python smplify-x-sil/smplifyx/pose_model_for_simulation.py --pkl $img/000.pkl \
+    #     --posed_mesh $img/posed.obj \
+    #     --skeleton_out $img/posed.json  \
+    #     --config smplify-x-sil/cfg_files/fit_smplx.yaml \
+    #     --gender $gender \
+    #     --data_folder NaN \
+    #     --output_folder NaN \
+    #     --visualize="True" \
+    #     --model_folder models \
+    #     --vposer_ckpt vposer_v1_0 \
+    #     --part_segm_fn smplify-x-sil/smplx_parts_segm.pkl \
+    #     --use_cuda="False"
 
 done
 
